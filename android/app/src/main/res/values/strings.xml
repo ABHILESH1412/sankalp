@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Sankalp</string>  <!-- Replace with your app's name -->
+    <string name="accessibility_service_description">App to block distracting videos of social media sites</string>
+</resources>
