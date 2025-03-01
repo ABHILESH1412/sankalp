@@ -37,6 +37,7 @@ class _MyAppState extends State<MyApp> {
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.green,
               brightness: darkMode ? Brightness.dark : Brightness.light,
+              // brightness: Brightness.dark
             ),
             useMaterial3: true,
           ),

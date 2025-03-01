@@ -36,6 +36,15 @@ class MainActivity: FlutterActivity() {
                 } else {
                     result.error("INVALID_ARGUMENTS", "Platform or isBlocked is null", null)
                 }
+            } else if (call.method == "isServiceStopped") {
+                val isStopped = call.argument<Boolean>("isStopped")
+                
+                if (isStopped != null) {
+                    MyAccessibilityService.updateServiceStoppedState(isStopped)
+                    result.success(null)  // Acknowledge receipt
+                } else {
+                    result.error("INVALID_ARGUMENTS", "isStopped is null", null)
+                }
             } else {
                 result.notImplemented()
             }

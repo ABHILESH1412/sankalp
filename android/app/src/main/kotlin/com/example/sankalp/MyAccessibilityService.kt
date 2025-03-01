@@ -30,6 +30,7 @@ class MyAccessibilityService : AccessibilityService() {
         private const val EVENT_TYPE_WINDOW_AND_CONTENT: Int = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
 
         private val platformBlockedStates = HashMap<String, Boolean>()
+        private var isServiceStopped: Boolean = false;
 
         // Static method to update the blocked state
         fun updatePlatformBlockedState(platform: String, isBlocked: Boolean) {
@@ -39,6 +40,10 @@ class MyAccessibilityService : AccessibilityService() {
         // get the platform blocked state. This method added to avoid unnecessary errors.
         fun getPlatformBlockedState(platform: String): Boolean {
             return platformBlockedStates[platform] ?: false // Return false by default if not found
+        }
+
+        fun updateServiceStoppedState(isStopped: Boolean){
+            isServiceStopped = isStopped;
         }
     }
 
@@ -52,7 +57,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private val packageEventTypeMap = hashMapOf(
         YOUTUBE_PACKAGE_NAME to EVENT_TYPE_WINDOW_STATE,
-        INSTAGRAM_PACKAGE_NAME to EVENT_TYPE_WINDOW_STATE,
+        INSTAGRAM_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
         LINKEDIN_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
         TIKTOK_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
         SNAPCHAT_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
@@ -88,6 +93,9 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        if(isServiceStopped){
+            return;
+        }
         val packageName = event.getPackageName();
         if (packageName == null) {
             Log.w("MyAccessibilityService", "Package name is null!");
