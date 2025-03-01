@@ -3,7 +3,7 @@
 Sankalp is an Android app designed to help users **block addictive short video content** like **YouTube Shorts, Instagram Reels, Snapchat Spotlight, and more**. This app uses **Android Accessibility Services** to detect and block these distractions, helping users stay focused and productive.  
 
 ## 📌 Features  
-✅ **Block YouTube Shorts, Instagram Reels, Snapchat Spotlight, TikTok, LinkedIn Clips, and Reddit Videos**  
+✅ **Block YouTube Shorts, Instagram Reels, Snapchat Spotlight, Snapchat Stories, TikTok, LinkedIn Clips, and X (Twitter) Videos**  
 ✅ **Auto-detection using Accessibility Services**  
 ✅ **Easy Start/Stop Toggle**  
 ✅ **Lightweight and Battery Efficient**  

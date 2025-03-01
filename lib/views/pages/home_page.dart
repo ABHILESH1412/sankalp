@@ -35,6 +35,11 @@ class HomePage extends StatelessWidget {
       "linkedinVideosBlockerNotifier",
       "assets/images/linkedin.png"
     ],
+    [
+      "X (Twitter) Videos",
+      "xVideosBlockerNotifier",
+      "assets/images/x.png"
+    ],
   ];
   final githubUrl = "https://github.com/ABHILESH1412/sankalp";
 
@@ -58,10 +63,16 @@ class HomePage extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // leading: const Icon(Icons.light),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.code), // GitHub-like code icon
-            tooltip: "View on GitHub",
-            onPressed: _launchGitHub,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: InkWell(
+              onTap: _launchGitHub,
+              child: Image.asset(
+                'assets/images/github.png', // Replace with your GitHub logo image
+                width: 30, // Adjust size
+                height: 30,
+              ),
+            ),
           ),
           ValueListenableBuilder(
             valueListenable: darkModeNotifier,

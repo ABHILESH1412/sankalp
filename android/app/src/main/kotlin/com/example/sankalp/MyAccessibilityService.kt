@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.util.Log
 
 import com.example.sankalp.app_activity_detector.*
 
@@ -14,7 +15,7 @@ class MyAccessibilityService : AccessibilityService() {
     private lateinit var snapchatStoriesDetector: PlatformDetector
     private lateinit var tiktokVideoDetector: PlatformDetector
     private lateinit var linkedinClipsDetector: PlatformDetector
-    private lateinit var redditVideosDetector: PlatformDetector
+    private lateinit var xVideosDetector: PlatformDetector
 
     companion object{
         private const val TAG: String = "MyAccessibilityService"
@@ -24,6 +25,7 @@ class MyAccessibilityService : AccessibilityService() {
         private const val TIKTOK_PACKAGE_NAME: String = "com.ss.android.ugc.trill"
         private const val SNAPCHAT_PACKAGE_NAME: String = "com.snapchat.android"
         private const val LINKEDIN_PACKAGE_NAME: String = "com.linkedin.android"
+        private const val X_PACKAGE_NAME: String = "com.twitter.android"
 
         private const val EVENT_TYPE_WINDOW_STATE: Int = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         private const val EVENT_TYPE_WINDOW_AND_CONTENT: Int = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
@@ -51,6 +53,7 @@ class MyAccessibilityService : AccessibilityService() {
         TIKTOK_PACKAGE_NAME,
         SNAPCHAT_PACKAGE_NAME,
         LINKEDIN_PACKAGE_NAME,
+        X_PACKAGE_NAME,
     )
 
     private val packageEventTypeMap = hashMapOf(
@@ -59,6 +62,7 @@ class MyAccessibilityService : AccessibilityService() {
         LINKEDIN_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
         TIKTOK_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
         SNAPCHAT_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
+        X_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT
     )
 
     private var currentEventTypeFlag: Int = EVENT_TYPE_WINDOW_STATE
@@ -72,6 +76,7 @@ class MyAccessibilityService : AccessibilityService() {
         snapchatStoriesDetector = SnapchatStoriesDetector()
         tiktokVideoDetector = TiktokVideoDetector()
         linkedinClipsDetector = LinkedinClipsDetector()
+        xVideosDetector = XVideosDetector()
 
         updateServiceInfo(EVENT_TYPE_WINDOW_STATE);
     }
@@ -148,6 +153,13 @@ class MyAccessibilityService : AccessibilityService() {
                 var _linkedinVideosBlocker: String = "linkedinVideosBlockerNotifier"
                 if (getPlatformBlockedState(_linkedinVideosBlocker) &&
                     linkedinClipsDetector.isPlatformDetected(rootNode)) {
+                    performGlobalAction(GLOBAL_ACTION_BACK)
+                }
+            }
+            X_PACKAGE_NAME -> {
+                var _xVideosBlocker: String = "xVideosBlockerNotifier"
+                if (getPlatformBlockedState(_xVideosBlocker) &&
+                    xVideosDetector.isPlatformDetected(rootNode)) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
