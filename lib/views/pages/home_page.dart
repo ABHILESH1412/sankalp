@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:sankalp/data/notifiers.dart';
 import 'package:sankalp/views/shared_preference_helper.dart';
 import 'package:sankalp/views/widgets/global_start_stop_button_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
+
   final List<List<String>> _widgetInfo = [
     [
       "Youtube Shorts",
@@ -34,6 +36,16 @@ class HomePage extends StatelessWidget {
       "assets/images/linkedin.png"
     ],
   ];
+  final githubUrl = "https://github.com/ABHILESH1412/sankalp";
+
+  Future<void> _launchGitHub() async {
+    final Uri url = Uri.parse(githubUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $githubUrl';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +58,11 @@ class HomePage extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // leading: const Icon(Icons.light),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.code), // GitHub-like code icon
+            tooltip: "View on GitHub",
+            onPressed: _launchGitHub,
+          ),
           ValueListenableBuilder(
             valueListenable: darkModeNotifier,
             builder: (context, darkMode, child) {
@@ -62,26 +79,30 @@ class HomePage extends StatelessWidget {
         ],
         toolbarHeight: 70,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _widgetInfo.length + 1,
-              itemBuilder: (context, index) {
-                if(index == _widgetInfo.length){
-                  return SizedBox(height: 100,);
-                }
-                return DoomScrollToggleWidget(
-                  title: _widgetInfo[index][0],
-                  spKey: _widgetInfo[index][1],
-                  iconPath: _widgetInfo[index][2],
-                );
-              },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: _widgetInfo.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == _widgetInfo.length) {
+                    return SizedBox(
+                      height: 120,
+                    );
+                  }
+                  return DoomScrollToggleWidget(
+                    title: _widgetInfo[index][0],
+                    spKey: _widgetInfo[index][1],
+                    iconPath: _widgetInfo[index][2],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      floatingActionButton: GlobalStartStopButtonWidget()
+      floatingActionButton: GlobalStartStopButtonWidget(),
     );
   }
 }

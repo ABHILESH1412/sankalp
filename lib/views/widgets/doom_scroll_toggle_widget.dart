@@ -44,7 +44,7 @@ class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 5),
+        const SizedBox(height: 10),
         ListTile(
           leading: Image.asset(widget.iconPath,
               width: 40, height: 40, fit: BoxFit.contain),
@@ -69,7 +69,7 @@ class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
             // });
           },
         ),
-        const SizedBox(height: 5),
+        // const SizedBox(height: 5),
       ],
     );
   }

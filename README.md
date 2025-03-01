@@ -2,14 +2,12 @@
 
 Sankalp is an Android app designed to help users **block addictive short video content** like **YouTube Shorts, Instagram Reels, Snapchat Spotlight, and more**. This app uses **Android Accessibility Services** to detect and block these distractions, helping users stay focused and productive.  
 
----
 ## 📌 Features  
 ✅ **Block YouTube Shorts, Instagram Reels, Snapchat Spotlight, TikTok, LinkedIn Clips, and Reddit Videos**  
 ✅ **Auto-detection using Accessibility Services**  
 ✅ **Easy Start/Stop Toggle**  
 ✅ **Lightweight and Battery Efficient**  
 
----
 ## 🚀 Getting Started  
 
 Follow these steps to **download, set up, and run the project** on your local machine.
@@ -62,17 +60,14 @@ flutter build apk --release
 
 The APK will be in the build/app/outputs/flutter-apk/ folder.
 
----
 ## 📜 License
 
 This project is **open-source**. Feel free to modify and use it for **personal** or **educational** purposes.
 
----
 ## 🙌 Support & Feedback
 If you like this project, please ⭐ star the repository!
 Have suggestions or issues? Open an issue on GitHub.
 
 📩 Contact: [three1412@proton.me]
 
----
 ## Made with ❤️ for Digital Well-being 🚀
