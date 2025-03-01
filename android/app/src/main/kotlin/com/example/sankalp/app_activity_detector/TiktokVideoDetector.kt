@@ -15,7 +15,6 @@ class TiktokVideoDetector : PlatformDetector {
     if (reelRoot == null){
       return false;
     }
-    reelRoot.recycle();
 
     // If the video is running on the screen press on the friends button to block the video.
     val friendsButton = findNodeById(rootNode, FRIENDS_BUTTON_ROOT_ID)
@@ -32,9 +31,7 @@ class TiktokVideoDetector : PlatformDetector {
   private fun findNodeById(rootNode: AccessibilityNodeInfo, viewId: String): AccessibilityNodeInfo? {
     val nodes = rootNode.findAccessibilityNodeInfosByViewId(viewId)
     if (nodes.isNotEmpty()) {
-      val node = nodes[0];
-      nodes.forEach { if (it != node) it.recycle(); } //recycle other nodes.
-      return node;
+      return nodes[0];
     }
 
     return null;

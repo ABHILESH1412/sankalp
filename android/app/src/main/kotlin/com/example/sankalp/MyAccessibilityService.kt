@@ -2,7 +2,6 @@ package com.example.sankalp
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
@@ -35,7 +34,6 @@ class MyAccessibilityService : AccessibilityService() {
         // Static method to update the blocked state
         fun updatePlatformBlockedState(platform: String, isBlocked: Boolean) {
             platformBlockedStates[platform] = isBlocked
-            Log.d(TAG, "Updated $platform block state to: $isBlocked")
         }
         // get the platform blocked state. This method added to avoid unnecessary errors.
         fun getPlatformBlockedState(platform: String): Boolean {
@@ -68,7 +66,6 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        Log.d("MyAccessibilityService", "Service connected")
         youtubeShortsDetector = YouTubeShortsDetector()
         instagramReelsDetector = InstagramReelsDetector()
         snapchatSpotlightDetector = SnapchatSpotlightDetector()
@@ -89,30 +86,27 @@ class MyAccessibilityService : AccessibilityService() {
                     AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
         }
         serviceInfo = info
-        Log.d(TAG, "Updated serviceInfo.") // Debugging
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if(isServiceStopped){
             return;
         }
-        val packageName = event.getPackageName();
-        if (packageName == null) {
-            Log.w("MyAccessibilityService", "Package name is null!");
-            return; // Exit if package name is unavailable
+        // val packageName = event.getPackageName();
+        // if (packageName == null) {
+        //     return; // Exit if package name is unavailable
+        // }
+
+        val rootNode: AccessibilityNodeInfo? = rootInActiveWindow
+
+        if (rootNode == null) {
+            return
         }
-        Log.d("MyAccessibilityService", "Event Package Name: ${packageName}");
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 handleWindowStateChanged(event)
             }
-        }
-        val rootNode: AccessibilityNodeInfo? = rootInActiveWindow
-
-        if (rootNode == null) {
-            Log.w("MyAccessibilityService", "Root node is null!")
-            return
         }
 
         when (event?.packageName) {
@@ -158,8 +152,6 @@ class MyAccessibilityService : AccessibilityService() {
                 }
             }
         }
-
-        rootNode.recycle()
     }
 
     private fun handleWindowStateChanged(event: AccessibilityEvent) {
@@ -173,12 +165,12 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
-        Log.d("MyAccessibilityService", "Service interrupted")
+        // Log.d("MyAccessibilityService", "Service interrupted")
         //Handle interruption (e.g., another accessibility service is enabled)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("MyAccessibilityService", "Service destroyed")
+        // Log.d("MyAccessibilityService", "Service destroyed")
     }
 }

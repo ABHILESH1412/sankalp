@@ -1,7 +1,6 @@
 package com.example.sankalp.app_activity_detector
 
 import android.view.accessibility.AccessibilityNodeInfo
-import android.util.Log
 
 class InstagramReelsDetector : PlatformDetector {
   companion object {
@@ -19,7 +18,6 @@ class InstagramReelsDetector : PlatformDetector {
     // Checking if the user is on the reel page.
     val reelRoot = findNodeById(rootNode, REEL_FRAGMENT_ROOT_ID)
     if (reelRoot != null) {
-      reelRoot.recycle();
       return true;
     }
 
@@ -31,9 +29,7 @@ class InstagramReelsDetector : PlatformDetector {
   private fun findNodeById(rootNode: AccessibilityNodeInfo, viewId: String): AccessibilityNodeInfo? {
     val nodes = rootNode.findAccessibilityNodeInfosByViewId(viewId)
     if (nodes.isNotEmpty()) {
-      val node = nodes[0];
-      nodes.forEach { if (it != node) it.recycle(); } //recycle other nodes.
-      return node;
+      return nodes[0];
     }
 
     return null;
@@ -45,7 +41,6 @@ class InstagramReelsDetector : PlatformDetector {
     contentDescription: String
   ): AccessibilityNodeInfo? {
     val parentNode = findNodeById(rootNode, viewId) ?: return null
-    Log.w("instagramdetector: ", "video container found.");
 
     fun searchInChildren(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
       if (node.contentDescription?.toString()?.equals(contentDescription, ignoreCase = true) == true) {
@@ -59,14 +54,12 @@ class InstagramReelsDetector : PlatformDetector {
           // node.recycle() Don't recycle parent here
           return foundNode
         }
-        child.recycle() // Recycle the child after searching it
       }
       return null
     }
 
 
     val result =  searchInChildren(parentNode)
-      parentNode.recycle() //recycle parent node here is important
     return result
   }
 }

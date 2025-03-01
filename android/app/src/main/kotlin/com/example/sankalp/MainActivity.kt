@@ -8,7 +8,6 @@ import android.provider.Settings
 import android.content.Context
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityManager
-import android.util.Log  // Import the Log class
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.example.sankalp/accessibility"
@@ -53,14 +52,12 @@ class MainActivity: FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume called")
         // Check accessibility status and notify Flutter
         checkAccessibilityAndNotify()
     }
 
     private fun checkAccessibilityAndNotify() {
         val isEnabled = isAccessibilityServiceEnabled()
-        Log.d(TAG, "Accessibility Service Enabled: $isEnabled")
 
           // Use 'runOnUiThread' because 'invokeMethod' needs to run on the UI thread
         runOnUiThread {
@@ -75,8 +72,6 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun isAccessibilityServiceEnabled(): Boolean {
-        Log.d(TAG, "Package Name: ${packageName}") // Use Log.d()
-
         val service = "${packageName}/${packageName}.MyAccessibilityService"
         val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         val accessibilityEnabled = Settings.Secure.getInt(contentResolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0)

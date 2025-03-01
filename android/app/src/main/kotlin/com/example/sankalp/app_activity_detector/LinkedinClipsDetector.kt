@@ -19,7 +19,6 @@ class LinkedinClipsDetector : PlatformDetector {
     // Checking if the user is on the dedicated video page
     val reelRoot = findNodeById(rootNode, REEL_FRAGMENT_ROOT_ID)
     if (reelRoot != null) {
-      reelRoot.recycle();
       return true;
     }
 
@@ -31,9 +30,7 @@ class LinkedinClipsDetector : PlatformDetector {
   private fun findNodeById(rootNode: AccessibilityNodeInfo, viewId: String): AccessibilityNodeInfo? {
     val nodes = rootNode.findAccessibilityNodeInfosByViewId(viewId)
     if (nodes.isNotEmpty()) {
-      val node = nodes[0];
-      nodes.forEach { if (it != node) it.recycle(); } //recycle other nodes.
-      return node;
+      return nodes[0];
     }
 
     return null;
