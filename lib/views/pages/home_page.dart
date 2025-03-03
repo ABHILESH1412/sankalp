@@ -36,11 +36,6 @@ class HomePage extends StatelessWidget {
       "assets/images/linkedin.png"
     ],
     ["X (Twitter) Videos", "xVideosBlockerNotifier", "assets/images/x.png"],
-    [
-      "Reddit Videos",
-      "redditVideosBlockerNotifier",
-      "assets/images/reddit.png"
-    ],
   ];
   final githubUrl = "https://github.com/ABHILESH1412/sankalp";
 

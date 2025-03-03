@@ -16,7 +16,6 @@ class MyAccessibilityService : AccessibilityService() {
     private lateinit var tiktokVideoDetector: PlatformDetector
     private lateinit var linkedinClipsDetector: PlatformDetector
     private lateinit var xVideosDetector: PlatformDetector
-    private lateinit var redditVideosDetector: PlatformDetector
 
     companion object{
         private const val TAG: String = "MyAccessibilityService"
@@ -27,7 +26,6 @@ class MyAccessibilityService : AccessibilityService() {
         private const val SNAPCHAT_PACKAGE_NAME: String = "com.snapchat.android"
         private const val LINKEDIN_PACKAGE_NAME: String = "com.linkedin.android"
         private const val X_PACKAGE_NAME: String = "com.twitter.android"
-        private const val REDDIT_PACKAGE_NAME: String = "com.reddit.frontpage"
 
         private val platformBlockedStates = HashMap<String, Boolean>()
         private var isServiceStopped: Boolean = false;
@@ -53,7 +51,6 @@ class MyAccessibilityService : AccessibilityService() {
         SNAPCHAT_PACKAGE_NAME,
         LINKEDIN_PACKAGE_NAME,
         X_PACKAGE_NAME,
-        REDDIT_PACKAGE_NAME,
     )
 
     override fun onServiceConnected() {
@@ -65,7 +62,6 @@ class MyAccessibilityService : AccessibilityService() {
         tiktokVideoDetector = TiktokVideoDetector()
         linkedinClipsDetector = LinkedinClipsDetector()
         xVideosDetector = XVideosDetector()
-        redditVideosDetector = RedditVideosDetector()
 
         updateServiceInfo(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
     }
@@ -139,13 +135,6 @@ class MyAccessibilityService : AccessibilityService() {
                 var _xVideosBlocker: String = "xVideosBlockerNotifier"
                 if (getPlatformBlockedState(_xVideosBlocker) &&
                     xVideosDetector.isPlatformDetected(rootNode)) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            REDDIT_PACKAGE_NAME -> {
-                var _redditVideosBlocker: String = "redditVideosBlockerNotifier"
-                if (getPlatformBlockedState(_redditVideosBlocker) &&
-                    redditVideosDetector.isPlatformDetected(rootNode)) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
