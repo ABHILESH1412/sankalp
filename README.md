@@ -4,6 +4,7 @@ Sankalp is an Android app designed to help users **block addictive short video c
 
 ## 📌 Features  
 ✅ **Block YouTube Shorts, Instagram Reels, Snapchat Spotlight, Snapchat Stories, TikTok, LinkedIn Clips, and X (Twitter) Videos**  
+✅ **The app automatically detects videos playing on the home feed and mutes them for a seamless, distraction-free experience.**  
 ✅ **Auto-detection using Accessibility Services**  
 ✅ **Easy Start/Stop Toggle**  
 ✅ **Lightweight and Battery Efficient**  
@@ -58,7 +59,18 @@ For a release APK (optimized for users):
 flutter build apk --release
 ```
 
-The APK will be in the build/app/outputs/flutter-apk/ folder.
+The APK will be in the `build/app/outputs/flutter-apk/` folder.
+
+### **⚠️ Important Note: Enabling Accessibility Services (Android 13+)**
+
+If you install the app directly from an APK file (sideloading), Android 13 and later versions may display a "Restricted Setting" message when you try to enable the app's accessibility service. This is a security feature. To enable the accessibility service, follow these steps:
+
+1.  **Long-press the app icon.**
+2.  **Select "App info"** (or the equivalent option on your device).
+3.  **Tap the three-dot menu (⋮)** in the top-right corner of the app info screen.
+4.  **Choose "Allow restricted settings"** (or a similarly worded option).
+5.  **Authenticate** with your device's PIN, pattern, or fingerprint if prompted.
+6.  **You're all set!** You can now enable the accessibility service for Sankalp in your device's settings and enjoy a distraction-free experience.
 
 ## 📜 License
 

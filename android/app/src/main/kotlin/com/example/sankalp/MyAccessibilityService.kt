@@ -16,6 +16,7 @@ class MyAccessibilityService : AccessibilityService() {
     private lateinit var tiktokVideoDetector: PlatformDetector
     private lateinit var linkedinClipsDetector: PlatformDetector
     private lateinit var xVideosDetector: PlatformDetector
+    private lateinit var redditVideosDetector: PlatformDetector
 
     companion object{
         private const val TAG: String = "MyAccessibilityService"
@@ -26,9 +27,7 @@ class MyAccessibilityService : AccessibilityService() {
         private const val SNAPCHAT_PACKAGE_NAME: String = "com.snapchat.android"
         private const val LINKEDIN_PACKAGE_NAME: String = "com.linkedin.android"
         private const val X_PACKAGE_NAME: String = "com.twitter.android"
-
-        private const val EVENT_TYPE_WINDOW_STATE: Int = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-        private const val EVENT_TYPE_WINDOW_AND_CONTENT: Int = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+        private const val REDDIT_PACKAGE_NAME: String = "com.reddit.frontpage"
 
         private val platformBlockedStates = HashMap<String, Boolean>()
         private var isServiceStopped: Boolean = false;
@@ -54,19 +53,8 @@ class MyAccessibilityService : AccessibilityService() {
         SNAPCHAT_PACKAGE_NAME,
         LINKEDIN_PACKAGE_NAME,
         X_PACKAGE_NAME,
+        REDDIT_PACKAGE_NAME,
     )
-
-    private val packageEventTypeMap = hashMapOf(
-        YOUTUBE_PACKAGE_NAME to EVENT_TYPE_WINDOW_STATE,
-        INSTAGRAM_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
-        LINKEDIN_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
-        TIKTOK_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
-        SNAPCHAT_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT,
-        X_PACKAGE_NAME to EVENT_TYPE_WINDOW_AND_CONTENT
-    )
-
-    private var currentEventTypeFlag: Int = EVENT_TYPE_WINDOW_STATE
-
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -77,8 +65,9 @@ class MyAccessibilityService : AccessibilityService() {
         tiktokVideoDetector = TiktokVideoDetector()
         linkedinClipsDetector = LinkedinClipsDetector()
         xVideosDetector = XVideosDetector()
+        redditVideosDetector = RedditVideosDetector()
 
-        updateServiceInfo(EVENT_TYPE_WINDOW_STATE);
+        updateServiceInfo(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
     }
 
     private fun updateServiceInfo(eventTypes: Int) {
@@ -97,21 +86,11 @@ class MyAccessibilityService : AccessibilityService() {
         if(isServiceStopped){
             return;
         }
-        // val packageName = event.getPackageName();
-        // if (packageName == null) {
-        //     return; // Exit if package name is unavailable
-        // }
 
         val rootNode: AccessibilityNodeInfo? = rootInActiveWindow
 
         if (rootNode == null) {
             return
-        }
-
-        when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                handleWindowStateChanged(event)
-            }
         }
 
         when (event?.packageName) {
@@ -163,16 +142,13 @@ class MyAccessibilityService : AccessibilityService() {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
-        }
-    }
-
-    private fun handleWindowStateChanged(event: AccessibilityEvent) {
-        val packageName = event.packageName?.toString() ?: return
-        val desiredEventTypeFlag = packageEventTypeMap[packageName] ?: EVENT_TYPE_WINDOW_STATE
-
-        if (desiredEventTypeFlag != currentEventTypeFlag) {
-            currentEventTypeFlag = desiredEventTypeFlag
-            updateServiceInfo(currentEventTypeFlag)
+            REDDIT_PACKAGE_NAME -> {
+                var _redditVideosBlocker: String = "redditVideosBlockerNotifier"
+                if (getPlatformBlockedState(_redditVideosBlocker) &&
+                    redditVideosDetector.isPlatformDetected(rootNode)) {
+                    performGlobalAction(GLOBAL_ACTION_BACK)
+                }
+            }
         }
     }
 

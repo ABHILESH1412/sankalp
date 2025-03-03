@@ -35,10 +35,11 @@ class HomePage extends StatelessWidget {
       "linkedinVideosBlockerNotifier",
       "assets/images/linkedin.png"
     ],
+    ["X (Twitter) Videos", "xVideosBlockerNotifier", "assets/images/x.png"],
     [
-      "X (Twitter) Videos",
-      "xVideosBlockerNotifier",
-      "assets/images/x.png"
+      "Reddit Videos",
+      "redditVideosBlockerNotifier",
+      "assets/images/reddit.png"
     ],
   ];
   final githubUrl = "https://github.com/ABHILESH1412/sankalp";
@@ -73,6 +74,42 @@ class HomePage extends StatelessWidget {
                 height: 30,
               ),
             ),
+          ),
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          "Close",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                      ),
+                    ],
+                    title: const Text(
+                      "Usage Notes",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+                    ),
+                    contentPadding: const EdgeInsets.all(25),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("1) This app will not automatically start on restart of the phone.", style: TextStyle(fontSize: 18),),
+                        SizedBox(height: 10,),
+                        Text("2) The app automatically detects videos playing on the home feed of X (twitter), Linkedin, Instagram and mutes them for a seamless, distraction-free experience.", style: TextStyle(fontSize: 18),),
+                      ],
+                    )),
+              );
+            },
+            icon: Icon(Icons.info),
           ),
           ValueListenableBuilder(
             valueListenable: darkModeNotifier,
