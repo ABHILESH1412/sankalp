@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.content.Context
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityManager
+import android.os.Bundle
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.example.sankalp/accessibility"
@@ -48,6 +49,12 @@ class MainActivity: FlutterActivity() {
                 result.notImplemented()
             }
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        startForegroundService(serviceIntent)
     }
 
     override fun onResume() {
