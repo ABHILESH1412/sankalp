@@ -5,6 +5,8 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 
 import com.example.sankalp.app_activity_detector.*
 
@@ -19,6 +21,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     companion object{
         private const val TAG: String = "MyAccessibilityService"
+        private const val DEBOUNCE_DELAY: Long = 200 // 200 milliseconds debounce delay
 
         private const val YOUTUBE_PACKAGE_NAME: String = "com.google.android.youtube"
         private const val INSTAGRAM_PACKAGE_NAME: String = "com.instagram.android"
@@ -52,6 +55,9 @@ class MyAccessibilityService : AccessibilityService() {
         LINKEDIN_PACKAGE_NAME,
         X_PACKAGE_NAME,
     )
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var lastBackPressTime: Long = 0
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -93,14 +99,14 @@ class MyAccessibilityService : AccessibilityService() {
             YOUTUBE_PACKAGE_NAME -> {
                 var _youtubeShortsBlocker: String = "youtubeShortsBlockerNotifier"
                 if (getPlatformBlockedState(_youtubeShortsBlocker) && 
-                    youtubeShortsDetector.isPlatformDetected(rootNode)) {
+                    youtubeShortsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
             INSTAGRAM_PACKAGE_NAME -> {
                 var _instagramReelsBlocker: String = "instagramReelsBlockerNotifier"
                 if (getPlatformBlockedState(_instagramReelsBlocker) && 
-                    instagramReelsDetector.isPlatformDetected(rootNode)) {
+                    instagramReelsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
@@ -108,17 +114,17 @@ class MyAccessibilityService : AccessibilityService() {
                 var _snapchatSpotlightBlocker: String = "snapchatSpotlightBlockerNotifier"
                 var _snapchatStoriesBlocker: String = "snapchatStoriesBlockerNotifier"
                 if (getPlatformBlockedState(_snapchatSpotlightBlocker) &&
-                    snapchatSpotlightDetector.isPlatformDetected(rootNode)) {
+                    snapchatSpotlightDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }else if(getPlatformBlockedState(_snapchatStoriesBlocker) &&
-                    snapchatStoriesDetector.isPlatformDetected(rootNode)){
+                    snapchatStoriesDetector.isPlatformDetected(rootNode) && shouldPressBack()){
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
             TIKTOK_PACKAGE_NAME -> {
                 var _tiktokVideosBlocker: String = "tiktokVideosBlockerNotifier"
                 if (getPlatformBlockedState(_tiktokVideosBlocker) &&
-                    tiktokVideoDetector.isPlatformDetected(rootNode)) {
+                    tiktokVideoDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     // We are not performing GLOBAL_ACTION_BACK in this because if we do so the app will be closed which leads to bad user experience. We are clicking on the Friends tab rather going back.
                     // The logic of this is implemented in the TiktokVideoDetector.kt file.
                     // performGlobalAction(GLOBAL_ACTION_BACK)
@@ -127,18 +133,27 @@ class MyAccessibilityService : AccessibilityService() {
             LINKEDIN_PACKAGE_NAME -> {
                 var _linkedinVideosBlocker: String = "linkedinVideosBlockerNotifier"
                 if (getPlatformBlockedState(_linkedinVideosBlocker) &&
-                    linkedinClipsDetector.isPlatformDetected(rootNode)) {
+                    linkedinClipsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
             X_PACKAGE_NAME -> {
                 var _xVideosBlocker: String = "xVideosBlockerNotifier"
                 if (getPlatformBlockedState(_xVideosBlocker) &&
-                    xVideosDetector.isPlatformDetected(rootNode)) {
+                    xVideosDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
             }
         }
+    }
+
+    private fun shouldPressBack(): Boolean {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackPressTime > DEBOUNCE_DELAY) {
+            lastBackPressTime = currentTime
+            return true
+        }
+        return false
     }
 
     override fun onInterrupt() {
