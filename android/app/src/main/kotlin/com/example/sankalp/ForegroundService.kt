@@ -23,10 +23,15 @@ class ForegroundService : Service() {
       .setSmallIcon(R.drawable.ic_notification)
       .build()
     startForeground(1, notification)
+
+    // Start MainActivity to initialize HomePage
+    val mainActivityIntent = Intent(this, MainActivity::class.java)
+    mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    startActivity(mainActivityIntent)
   }
 
+  // Start MyAccessibilityService
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    // Your background task code here
     return START_STICKY
   }
 
