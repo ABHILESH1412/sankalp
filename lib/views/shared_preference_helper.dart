@@ -22,9 +22,31 @@ class SharedPrefsHelper {
     await _prefs?.setBool(key, value);
   }
 
+  Future<void> setDateTime(String key, DateTime value) async {
+    await _prefs?.setString(key, value.toIso8601String());
+  }
+
+  Future<void> setString(String key, String value) async {
+    await _prefs?.setString(key, value);
+  }
+
   // Get data
   bool? getBool(String key) {
     return _prefs?.getBool(key);
+  }
+
+  Future<DateTime?> getDateTime(String key) async {
+    String? dateTimeString = _prefs?.getString(key);
+
+    if (dateTimeString != null) {
+      return DateTime.parse(dateTimeString);
+    }
+    
+    return null;
+  }
+
+  String? getString(String key) {
+    return _prefs?.getString(key);
   }
 
   // Remove data

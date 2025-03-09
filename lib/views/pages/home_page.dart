@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:sankalp/data/notifiers.dart';
 import 'package:sankalp/views/shared_preference_helper.dart';
 import 'package:sankalp/views/widgets/global_start_stop_button_widget.dart';
+import 'package:sankalp/views/widgets/timer_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   final List<List<String>> _widgetInfo = [
     [
       "Youtube Shorts",
@@ -37,9 +44,12 @@ class HomePage extends StatelessWidget {
     ],
     ["X (Twitter) Videos", "xVideosBlockerNotifier", "assets/images/x.png"],
   ];
+
   final githubUrl = "https://github.com/ABHILESH1412/sankalp";
+
   final issuesUrl =
       "https://docs.google.com/forms/d/e/1FAIpQLScvWRgABpLPKN50RcnjE78CuPq66ML7XKiLMzHjm2EgvGv_2Q/viewform?usp=dialog";
+
   final featureUrl =
       "https://docs.google.com/forms/d/e/1FAIpQLSdOcPQ9CQfu9INH4e8gYyoupSTb3AvA3p6f4wTKIlMjQmA0Bg/viewform?usp=dialog";
 
@@ -202,6 +212,7 @@ class HomePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            TimerWidget(),
             Expanded(
               child: ListView.builder(
                 itemCount: _widgetInfo.length + 1,
