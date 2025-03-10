@@ -159,7 +159,7 @@ class _GlobalStartStopButtonWidgetState
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             duration: Duration(seconds: 2), 
-            backgroundColor: Colors.green, 
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
             behavior: SnackBarBehavior.floating, 
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10), 
@@ -168,7 +168,7 @@ class _GlobalStartStopButtonWidgetState
         );
         if (isTimerRunningNotifier.value == false) {
           final DateTime now = DateTime.now();
-          final DateTime endTime = now.add(Duration(minutes: 1));
+          final DateTime endTime = now.add(Duration(minutes: 5));
 
           setState(() {
             isTimerRunningNotifier.value = true;

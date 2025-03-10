@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.green,
+              seedColor: const Color.fromARGB(255, 93, 135, 54),
               brightness: darkMode ? Brightness.dark : Brightness.light,
               // brightness: Brightness.dark
             ),
@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
           home: Consumer<AccessibilityServiceManager>(
             builder: (context, accessibilityService, child) {
               if (accessibilityService.isLoading) {
-                return LoadingPage();
+                return const LoadingPage();
               } else if (accessibilityService.isAccessibilityServiceEnabled) {
                 return HomePage();
               } else {

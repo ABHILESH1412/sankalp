@@ -23,24 +23,34 @@ class _TimerWidgetState extends State<TimerWidget> {
               child: isTimerRunning
                   ? Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(40),
+                      margin: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        // color: Theme.of(context).colorScheme.inversePrimary,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: Theme.of(context).colorScheme.inversePrimary,
+                            width: 3),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // const SizedBox(height: 30,),
                           const Text(
                             "You can watch reels for:",
-                            style: TextStyle(color: Colors.white, fontSize: 20),
+                            style: TextStyle(fontSize: 20),
                           ),
                           Text(
                             timerDuration,
                             style: const TextStyle(
-                                color: Colors.white, fontSize: 30),
+                                fontSize: 30, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     )
-                  : const SizedBox.shrink(), // Hidden state when timer isn't running
+                  : const SizedBox
+                      .shrink(), // Hidden state when timer isn't running
             );
           },
         );

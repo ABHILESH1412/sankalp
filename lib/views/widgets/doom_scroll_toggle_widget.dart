@@ -19,7 +19,8 @@ class DoomScrollToggleWidget extends StatefulWidget {
 
 class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
   late bool _isBlocked = SharedPrefsHelper().getBool(widget.spKey) ?? false;
-  static const platformChannel = MethodChannel('com.example.sankalp/accessibility');
+  static const platformChannel =
+      MethodChannel('com.example.sankalp/accessibility');
 
   @override
   void initState() {
@@ -44,7 +45,7 @@ class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 10),
+        const SizedBox(height: 20),
         ListTile(
           leading: Image.asset(widget.iconPath,
               width: 40, height: 40, fit: BoxFit.contain),
@@ -61,6 +62,13 @@ class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
               });
               _sendToggleState();
             },
+            thumbIcon: WidgetStateProperty.resolveWith<Icon?>(
+                (Set<WidgetState> states) {
+              if (_isBlocked == false) {
+                return const Icon(Icons.close);
+              }
+              return const Icon(Icons.check); // All other states will use the default thumbIcon.
+            }),
           ),
           onTap: () {
             // Optional: Handle tap on the entire tile (excluding the switch)
@@ -69,7 +77,6 @@ class _DoomScrollToggleWidgetState extends State<DoomScrollToggleWidget> {
             // });
           },
         ),
-        // const SizedBox(height: 5),
       ],
     );
   }
