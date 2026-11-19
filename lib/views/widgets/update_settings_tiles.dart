@@ -124,7 +124,7 @@ class _UpdateSettingsTilesState extends State<UpdateSettingsTiles>
             final needsPermission = enabled && !_canInstall;
             return ListTile(
               leading: const Icon(Icons.system_update),
-              title: const Text("Auto-update", style: TextStyle(fontSize: 18)),
+              title: const Text("Auto-update"),
               subtitle: needsPermission
                   ? Text("Tap to allow installing updates",
                       style: TextStyle(color: errorColor))
@@ -136,6 +136,7 @@ class _UpdateSettingsTilesState extends State<UpdateSettingsTiles>
             );
           },
         ),
+        const Divider(indent: 56),
         ListTile(
           leading: _checking
               ? const SizedBox(
@@ -144,7 +145,7 @@ class _UpdateSettingsTilesState extends State<UpdateSettingsTiles>
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.update),
-          title: const Text("Check for updates", style: TextStyle(fontSize: 18)),
+          title: const Text("Check for updates"),
           subtitle: _version.isEmpty ? null : Text("Version $_version"),
           onTap: _checkForUpdates,
         ),

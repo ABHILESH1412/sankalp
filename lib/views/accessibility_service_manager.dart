@@ -53,4 +53,12 @@ class AccessibilityServiceManager with ChangeNotifier {
       debugPrint("Failed to open accessibility settings: '${e.message}'.");
     }
   }
+
+  Future<void> openAppInfo() async {
+    try {
+      await _platform.invokeMethod('openAppInfo');
+    } on PlatformException catch (e) {
+      debugPrint("Failed to open app info: '${e.message}'.");
+    }
+  }
 }

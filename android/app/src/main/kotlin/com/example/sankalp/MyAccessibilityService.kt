@@ -12,6 +12,8 @@ class MyAccessibilityService : AccessibilityService() {
     companion object {
         private const val TAG = "MyAccessibilityService"
         private const val DEBOUNCE_DELAY: Long = 200 // ms between two automatic "back" presses
+        // Several back presses within this window count as one blocked visit in the stats.
+        private const val SAME_VISIT_WINDOW: Long = 3000
 
         private const val YOUTUBE_PACKAGE_NAME = "com.google.android.youtube"
         private const val INSTAGRAM_PACKAGE_NAME = "com.instagram.android"
@@ -39,6 +41,8 @@ class MyAccessibilityService : AccessibilityService() {
     private val xVideosDetector = XVideosDetector()
 
     private var lastBackPressTime: Long = 0
+    private var lastBlockedPackage: String? = null
+    private var lastBlockTime: Long = 0
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -65,39 +69,48 @@ class MyAccessibilityService : AccessibilityService() {
 
         when (packageName) {
             YOUTUBE_PACKAGE_NAME ->
-                if (isBlocked(KEY_YOUTUBE) && youtubeShortsDetector.isPlatformDetected(rootNode)) goBack()
+                if (isBlocked(KEY_YOUTUBE) && youtubeShortsDetector.isPlatformDetected(rootNode)) goBack(packageName)
 
             INSTAGRAM_PACKAGE_NAME ->
-                if (isBlocked(KEY_INSTAGRAM) && instagramReelsDetector.isPlatformDetected(rootNode)) goBack()
+                if (isBlocked(KEY_INSTAGRAM) && instagramReelsDetector.isPlatformDetected(rootNode)) goBack(packageName)
 
             SNAPCHAT_PACKAGE_NAME ->
                 if (isBlocked(KEY_SNAPCHAT_SPOTLIGHT) && snapchatSpotlightDetector.isPlatformDetected(rootNode)) {
-                    goBack()
+                    goBack(packageName)
                 } else if (isBlocked(KEY_SNAPCHAT_STORIES) && snapchatStoriesDetector.isPlatformDetected(rootNode)) {
-                    goBack()
+                    goBack(packageName)
                 }
 
             // Pressing back would close TikTok, so the detector taps the Friends tab
             // itself instead (see TiktokVideoDetector).
             TIKTOK_PACKAGE_NAME ->
-                if (isBlocked(KEY_TIKTOK)) tiktokVideoDetector.isPlatformDetected(rootNode)
+                if (isBlocked(KEY_TIKTOK) && tiktokVideoDetector.isPlatformDetected(rootNode)) countBlock(packageName)
 
             LINKEDIN_PACKAGE_NAME ->
-                if (isBlocked(KEY_LINKEDIN) && linkedinClipsDetector.isPlatformDetected(rootNode)) goBack()
+                if (isBlocked(KEY_LINKEDIN) && linkedinClipsDetector.isPlatformDetected(rootNode)) goBack(packageName)
 
             X_PACKAGE_NAME ->
-                if (isBlocked(KEY_X) && xVideosDetector.isPlatformDetected(rootNode)) goBack()
+                if (isBlocked(KEY_X) && xVideosDetector.isPlatformDetected(rootNode)) goBack(packageName)
         }
     }
 
     private fun isBlocked(key: String) = AppPrefs.isPlatformBlocked(this, key)
 
-    private fun goBack() {
+    private fun goBack(packageName: String) {
         val now = System.currentTimeMillis()
         if (now - lastBackPressTime > DEBOUNCE_DELAY) {
             lastBackPressTime = now
             performGlobalAction(GLOBAL_ACTION_BACK)
+            countBlock(packageName)
         }
+    }
+
+    private fun countBlock(packageName: String) {
+        val now = System.currentTimeMillis()
+        val sameVisit = packageName == lastBlockedPackage && now - lastBlockTime < SAME_VISIT_WINDOW
+        lastBlockedPackage = packageName
+        lastBlockTime = now
+        if (!sameVisit) AppPrefs.recordBlock(this)
     }
 
     override fun onInterrupt() {

@@ -17,6 +17,11 @@ class SharedPrefsHelper {
     _prefs = await SharedPreferences.getInstance();
   }
 
+  /// Re-reads values written outside Dart (e.g. by the native blocker).
+  Future<void> reload() async {
+    await _prefs?.reload();
+  }
+
   Future<void> setBool(String key, bool value) async {
     await _prefs?.setBool(key, value);
   }

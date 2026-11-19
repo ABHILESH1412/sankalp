@@ -39,6 +39,12 @@ class MainActivity : FlutterActivity() {
                         openSettings(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         result.success(null)
                     }
+                    "openAppInfo" -> {
+                        openSettings(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                        )
+                        result.success(null)
+                    }
                     "isAccessibilityEnabled" -> result.success(isAccessibilityServiceEnabled())
                     else -> result.notImplemented()
                 }

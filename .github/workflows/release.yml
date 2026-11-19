@@ -124,7 +124,8 @@ jobs:
             --build-number "${{ steps.version.outputs.build }}"
           cp build/app/outputs/flutter-apk/app-release.apk "$APK_NAME"
           echo "Signing certificate:"
-          keytool -printcert -jarfile "$APK_NAME" | grep -E 'Owner|SHA256' || true
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs "$APK_NAME" | grep -E 'DN|SHA-256'
 
       - name: Remove signing key
         if: always()

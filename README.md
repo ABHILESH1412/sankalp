@@ -77,13 +77,13 @@ Download the latest `Sankalp.apk` from the [Releases page](https://github.com/AB
 
 ### ⚠️ If Google Play Protect blocks the install
 
-If Google Play Protect blocks the install ("App blocked" / "unsafe app"), it's because sankalp isn't from the Play Store. To install it anyway:
+If Google Play Protect blocks the install ("App blocked" / "unsafe app"), it's because Sankalp isn't from the Play Store. To install it anyway:
 
 1. Open the Play Store, tap your profile icon (top right) → **Play Protect**.
 2. Turn off **Scan apps with Play Protect**.
 3. Open the APK again and install it.
 4. Go back to the same setting and turn **Scan apps with Play Protect** on again.
-5. **Allow restricted settings.** Long-press the sankalp icon → **App info** → **⋮** (top right) → **Allow restricted settings**. Android requires this for every app from outside the Play Store before its accessibility service can be switched on.
+5. **Allow restricted settings.** Long-press the Sankalp icon → **App info** → **⋮** (top right) → **Allow restricted settings**. Android requires this for every app from outside the Play Store before its accessibility service can be switched on.
 
 After that, open the app and enable its accessibility service when asked.
 
