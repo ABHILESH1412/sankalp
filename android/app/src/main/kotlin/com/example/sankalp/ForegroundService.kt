@@ -3,91 +3,99 @@ package com.example.sankalp
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
-import android.os.Handler
-import android.os.Looper
-import java.text.SimpleDateFormat
-import java.util.*
 
+/**
+ * Keeps the app process at foreground priority so aggressive OEM battery savers are
+ * less likely to kill the accessibility service.
+ *
+ * It no longer holds any state (the break timer and the per-app toggles are read from
+ * SharedPreferences by [MyAccessibilityService]) and it no longer launches MainActivity,
+ * which Android blocks from the background anyway.
+ */
 class ForegroundService : Service() {
   companion object {
-    const val CHANNEL_ID = "ForegroundServiceChannel"
-    var timerDuration = 0L;
+    private const val TAG = "ForegroundService"
+    private const val CHANNEL_ID = "sankalp_background"
+    private const val NOTIFICATION_ID = 1
 
-    var handler = Handler(Looper.getMainLooper())
-    var runnable: Runnable? = null
-
-    fun getTimeDifferenceInMillis(endTime: String): Long {
-      val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-      dateFormat.timeZone = TimeZone.getDefault() // Ensure it's in the correct timezone
-  
-      return try {
-        val endDate = dateFormat.parse(endTime) // Parse end time
-        val currentDate = Date() // Get current time
-        endDate?.time?.minus(currentDate.time) ?: 0L // Difference in milliseconds
+    /** Starts the service, never throwing if Android refuses to start it right now. */
+    fun start(context: Context) {
+      try {
+        val intent = Intent(context, ForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          context.startForegroundService(intent)
+        } else {
+          context.startService(intent)
+        }
       } catch (e: Exception) {
-        e.printStackTrace()
-        0L // Return 0 if there's an error
+        // e.g. ForegroundServiceStartNotAllowedException when started from the background.
+        Log.w(TAG, "Could not start foreground service", e)
       }
-    } 
-
-    fun startTimer(value: String) {
-      timerDuration = getTimeDifferenceInMillis(value)
-      println("Timer Started");
-      MyAccessibilityService.updateServiceStoppedState(true);
-
-      runnable = Runnable {
-        println("Timer finished!")
-        MyAccessibilityService.updateServiceStoppedState(false);
-      }
-      handler.postDelayed(runnable!!, timerDuration)
-    }
-
-    fun updateEndTime(value: String) {
-      timerDuration = getTimeDifferenceInMillis(value)
-      handler.removeCallbacks(runnable!!)
-      handler.postDelayed(runnable!!, timerDuration)
     }
   }
 
-  override fun onCreate() {
-    super.onCreate()
-    createNotificationChannel()
-    val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-      .setContentTitle("Sankalp Service")
-      .setContentText("Running in the background")
-      .setSmallIcon(R.drawable.ic_notification)
-      .build()
-    startForeground(1, notification)
-
-    // Start MainActivity to initialize HomePage
-    val mainActivityIntent = Intent(this, MainActivity::class.java)
-    mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    startActivity(mainActivityIntent)
-  }
-
-  // Start MyAccessibilityService
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    try {
+      createNotificationChannel()
+      val notification = buildNotification()
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+      } else {
+        startForeground(NOTIFICATION_ID, notification)
+      }
+    } catch (e: Exception) {
+      Log.w(TAG, "Could not enter foreground state", e)
+      stopSelf()
+      return START_NOT_STICKY
+    }
     return START_STICKY
   }
 
-  override fun onBind(intent: Intent?): IBinder? {
-      return null
+  // Android 15+ calls this when a time-limited foreground service runs out of time.
+  // specialUse has no limit, but stop cleanly instead of crashing if it ever happens.
+  override fun onTimeout(startId: Int, fgsType: Int) {
+    stopSelf()
+  }
+
+  override fun onBind(intent: Intent?): IBinder? = null
+
+  private fun buildNotification(): Notification {
+    val openApp = PendingIntent.getActivity(
+      this,
+      0,
+      Intent(this, MainActivity::class.java),
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    return NotificationCompat.Builder(this, CHANNEL_ID)
+      .setContentTitle("Sankalp is active")
+      .setContentText("Blocking short videos in the background")
+      .setSmallIcon(R.drawable.ic_notification)
+      .setContentIntent(openApp)
+      .setOngoing(true)
+      .setPriority(NotificationCompat.PRIORITY_LOW)
+      .build()
   }
 
   private fun createNotificationChannel() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val serviceChannel = NotificationChannel(
+      val manager = getSystemService(NotificationManager::class.java) ?: return
+      // Remove the old, louder channel used by earlier versions.
+      manager.deleteNotificationChannel("ForegroundServiceChannel")
+      val channel = NotificationChannel(
         CHANNEL_ID,
-        "Foreground Service Channel",
-        NotificationManager.IMPORTANCE_DEFAULT
-      )
-      val manager = getSystemService(NotificationManager::class.java)
-      manager.createNotificationChannel(serviceChannel)
+        "Background service",
+        NotificationManager.IMPORTANCE_LOW
+      ).apply { setShowBadge(false) }
+      manager.createNotificationChannel(channel)
     }
   }
 }

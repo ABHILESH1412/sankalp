@@ -1,55 +1,40 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Thin wrapper around [SharedPreferences].
+///
+/// Note: the Android accessibility service reads some of these keys directly
+/// (see android/.../AppPrefs.kt), so keep key names and value types in sync.
 class SharedPrefsHelper {
   static final SharedPrefsHelper _instance = SharedPrefsHelper._internal();
   SharedPreferences? _prefs;
 
-  // Private constructor
   SharedPrefsHelper._internal();
 
-  // Factory constructor to return the same instance
-  factory SharedPrefsHelper() {
-    return _instance;
-  }
+  factory SharedPrefsHelper() => _instance;
 
-  // Initialize SharedPreferences (call this in main.dart before runApp)
+  /// Call once in main() before runApp.
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Save data
   Future<void> setBool(String key, bool value) async {
     await _prefs?.setBool(key, value);
   }
 
-  Future<void> setDateTime(String key, DateTime value) async {
-    await _prefs?.setString(key, value.toIso8601String());
+  Future<void> setInt(String key, int value) async {
+    await _prefs?.setInt(key, value);
   }
 
   Future<void> setString(String key, String value) async {
     await _prefs?.setString(key, value);
   }
 
-  // Get data
-  bool? getBool(String key) {
-    return _prefs?.getBool(key);
-  }
+  bool? getBool(String key) => _prefs?.getBool(key);
 
-  Future<DateTime?> getDateTime(String key) async {
-    String? dateTimeString = _prefs?.getString(key);
+  int? getInt(String key) => _prefs?.getInt(key);
 
-    if (dateTimeString != null) {
-      return DateTime.parse(dateTimeString);
-    }
-    
-    return null;
-  }
+  String? getString(String key) => _prefs?.getString(key);
 
-  String? getString(String key) {
-    return _prefs?.getString(key);
-  }
-
-  // Remove data
   Future<void> remove(String key) async {
     await _prefs?.remove(key);
   }

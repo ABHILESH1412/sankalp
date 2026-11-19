@@ -19,7 +19,7 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -28,7 +28,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
+    return ValueListenableBuilder<bool>(
       valueListenable: darkModeNotifier,
       builder: (context, darkMode, child) {
         return MaterialApp(
@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> {
               if (accessibilityService.isLoading) {
                 return const LoadingPage();
               } else if (accessibilityService.isAccessibilityServiceEnabled) {
-                return HomePage();
+                return const HomePage();
               } else {
                 return const SettingsPage();
               }

@@ -1,9 +1,10 @@
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/accessibility_service_description"
-    android:packageNames="com.android.settings"
+    android:packageNames="com.google.android.youtube,com.instagram.android,com.ss.android.ugc.trill,com.snapchat.android,com.linkedin.android,com.twitter.android"
     android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
-    android:accessibilityFlags="flagDefault"
+    android:accessibilityFlags="flagIncludeNotImportantViews|flagReportViewIds"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="true"
-    android:settingsActivity=".MainActivity" />
+    android:canPerformGestures="false"
+    android:settingsActivity="com.example.sankalp.MainActivity" />

@@ -1,9 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- specialUse has no runtime limit and may be started from BOOT_COMPLETED on
+         Android 15+. The old dataSync type is killed after 6 hours on Android 15,
+         which crashed the app, and can no longer be started at boot. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- In-app auto-update -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
     <application
-        android:label="sankalp"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
@@ -50,13 +59,28 @@
         <service
             android:name=".ForegroundService"
             android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the accessibility-based short video blocker running reliably in the background." />
+        </service>
+
+        <!-- Periodic background update check (JobScheduler). -->
+        <service
+            android:name=".update.UpdateJobService"
             android:exported="true"
-            android:foregroundServiceType="dataSync" />
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Receives the result of an update install session. -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

@@ -1,0 +1,156 @@
+name: Release
+
+# Builds a signed APK on GitHub's machines and publishes it as a GitHub Release.
+# Start it with scripts/release.sh (or from the Actions tab -> Release -> Run workflow).
+#
+# The installed app's auto-updater looks at the latest release and downloads the
+# "Sankalp.apk" asset, so every release must be signed with the same key
+# (see "Releasing" in README.md for the one-time secrets setup).
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which part of the version to bump"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      notes:
+        description: "Release notes (optional, auto-generated from commits if empty)"
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.47.9"
+  APK_NAME: Sankalp.apk
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret ANDROID_${name} is not set. See 'Releasing' in README.md."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          current=$(grep -E '^version:' pubspec.yaml | head -1 | awk '{print $2}')
+          name=${current%%+*}
+          build=${current#*+}
+          [ "$build" = "$current" ] && build=0
+          IFS=. read -r major minor patch <<< "$name"
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            *) echo "::error::Unknown bump '$BUMP'"; exit 1 ;;
+          esac
+          new_name="$major.$minor.$patch"
+          new_build=$((build + 1))
+          if git rev-parse -q --verify "refs/tags/v$new_name" >/dev/null; then
+            echo "::error::Tag v$new_name already exists."
+            exit 1
+          fi
+          sed -i -E "s/^version: .*/version: $new_name+$new_build/" pubspec.yaml
+          echo "Releasing $current -> $new_name+$new_build"
+          echo "name=$new_name" >> "$GITHUB_OUTPUT"
+          echo "build=$new_build" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze and test
+        run: |
+          flutter analyze --no-fatal-infos
+          flutter test
+
+      - name: Set up signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+          {
+            echo "storeFile=release.keystore"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release \
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ steps.version.outputs.build }}"
+          cp build/app/outputs/flutter-apk/app-release.apk "$APK_NAME"
+          echo "Signing certificate:"
+          keytool -printcert -jarfile "$APK_NAME" | grep -E 'Owner|SHA256' || true
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f android/app/release.keystore android/key.properties
+
+      - name: Commit version bump and tag
+        run: |
+          tag="v${{ steps.version.outputs.name }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "Release $tag"
+          git tag "$tag"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "$tag"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          tag="v${{ steps.version.outputs.name }}"
+          if [ -n "$NOTES" ]; then
+            gh release create "$tag" "$APK_NAME" --title "Sankalp $tag" --notes "$NOTES" --latest
+          else
+            gh release create "$tag" "$APK_NAME" --title "Sankalp $tag" --generate-notes --latest
+          fi
+          echo "### Released $tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"

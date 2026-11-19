@@ -4,17 +4,17 @@ import 'package:sankalp/data/notifiers.dart';
 import 'package:sankalp/views/shared_preference_helper.dart';
 import 'package:sankalp/views/widgets/global_start_stop_button_widget.dart';
 import 'package:sankalp/views/widgets/timer_widget.dart';
+import 'package:sankalp/views/widgets/update_settings_tiles.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   final List<List<String>> _widgetInfo = [
     [
       "Youtube Shorts",
@@ -53,30 +53,23 @@ class _HomePageState extends State<HomePage>
   final featureUrl =
       "https://docs.google.com/forms/d/e/1FAIpQLSdOcPQ9CQfu9INH4e8gYyoupSTb3AvA3p6f4wTKIlMjQmA0Bg/viewform?usp=dialog";
 
-  Future<void> _launchGitHub() async {
-    final Uri url = Uri.parse(githubUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $githubUrl';
-    }
+  void _setDarkMode(bool value) {
+    darkModeNotifier.value = value;
+    SharedPrefsHelper().setBool(PrefKeys.darkMode, value);
   }
 
-  Future<void> _reportAnIssue() async {
-    final Uri url = Uri.parse(issuesUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $issuesUrl';
+  Future<void> _openUrl(String url) async {
+    bool opened;
+    try {
+      opened = await launchUrl(Uri.parse(url),
+          mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
     }
-  }
-
-  Future<void> _requestAFeature() async {
-    final Uri url = Uri.parse(featureUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $featureUrl';
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Couldn't open $url")),
+      );
     }
   }
 
@@ -99,7 +92,7 @@ class _HomePageState extends State<HomePage>
                 textAlign: TextAlign.center,
                 "Settings",
                 style:
-                    const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                    TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
               ),
             ),
             Divider(
@@ -117,21 +110,12 @@ class _HomePageState extends State<HomePage>
                     darkMode ? "Dark Mode" : "Light Mode",
                     style: const TextStyle(fontSize: 18),
                   ),
-                  onTap: () {
-                    SharedPrefsHelper()
-                        .setBool('darkModeNotifier', !darkModeNotifier.value);
-                    darkModeNotifier.value = !darkModeNotifier.value;
-                  },
-                  trailing: Switch(
-                      value: darkMode,
-                      onChanged: (value) {
-                        SharedPrefsHelper().setBool(
-                            'darkModeNotifier', !darkModeNotifier.value);
-                        darkModeNotifier.value = !darkModeNotifier.value;
-                      }),
+                  onTap: () => _setDarkMode(!darkMode),
+                  trailing: Switch(value: darkMode, onChanged: _setDarkMode),
                 );
               },
             ),
+            const UpdateSettingsTiles(),
             // App Info
             ListTile(
               leading: const Icon(Icons.info),
@@ -182,7 +166,7 @@ class _HomePageState extends State<HomePage>
                 "Report an Issue",
                 style: TextStyle(fontSize: 18),
               ),
-              onTap: _reportAnIssue,
+              onTap: () => _openUrl(issuesUrl),
             ),
             // Request a Feature
             ListTile(
@@ -191,7 +175,7 @@ class _HomePageState extends State<HomePage>
                 "Request a Feature",
                 style: TextStyle(fontSize: 18),
               ),
-              onTap: _requestAFeature,
+              onTap: () => _openUrl(featureUrl),
             ),
             // Github
             ListTile(
@@ -200,11 +184,11 @@ class _HomePageState extends State<HomePage>
                 width: 25, // Adjust size
                 height: 25,
               ),
-              title: Text(
+              title: const Text(
                 "Github",
-                style: const TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 18),
               ),
-              onTap: _launchGitHub,
+              onTap: () => _openUrl(githubUrl),
             ),
           ],
         ),
@@ -212,7 +196,7 @@ class _HomePageState extends State<HomePage>
       body: SafeArea(
         child: Column(
           children: [
-            TimerWidget(),
+            const TimerWidget(),
             Expanded(
               child: ListView.builder(
                 itemCount: _widgetInfo.length + 1,
@@ -233,7 +217,7 @@ class _HomePageState extends State<HomePage>
           ],
         ),
       ),
-      floatingActionButton: GlobalStartStopButtonWidget(),
+      floatingActionButton: const GlobalStartStopButtonWidget(),
     );
   }
 }

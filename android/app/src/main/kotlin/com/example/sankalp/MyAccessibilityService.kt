@@ -1,168 +1,106 @@
 package com.example.sankalp
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.util.Log
-import android.os.Handler
-import android.os.Looper
 
 import com.example.sankalp.app_activity_detector.*
 
 class MyAccessibilityService : AccessibilityService() {
-    private lateinit var youtubeShortsDetector: PlatformDetector
-    private lateinit var instagramReelsDetector: PlatformDetector
-    private lateinit var snapchatSpotlightDetector: PlatformDetector
-    private lateinit var snapchatStoriesDetector: PlatformDetector
-    private lateinit var tiktokVideoDetector: PlatformDetector
-    private lateinit var linkedinClipsDetector: PlatformDetector
-    private lateinit var xVideosDetector: PlatformDetector
 
-    companion object{
-        private const val TAG: String = "MyAccessibilityService"
-        private const val DEBOUNCE_DELAY: Long = 200 // 200 milliseconds debounce delay
+    companion object {
+        private const val TAG = "MyAccessibilityService"
+        private const val DEBOUNCE_DELAY: Long = 200 // ms between two automatic "back" presses
 
-        private const val YOUTUBE_PACKAGE_NAME: String = "com.google.android.youtube"
-        private const val INSTAGRAM_PACKAGE_NAME: String = "com.instagram.android"
-        private const val TIKTOK_PACKAGE_NAME: String = "com.ss.android.ugc.trill"
-        private const val SNAPCHAT_PACKAGE_NAME: String = "com.snapchat.android"
-        private const val LINKEDIN_PACKAGE_NAME: String = "com.linkedin.android"
-        private const val X_PACKAGE_NAME: String = "com.twitter.android"
+        private const val YOUTUBE_PACKAGE_NAME = "com.google.android.youtube"
+        private const val INSTAGRAM_PACKAGE_NAME = "com.instagram.android"
+        private const val TIKTOK_PACKAGE_NAME = "com.ss.android.ugc.trill"
+        private const val SNAPCHAT_PACKAGE_NAME = "com.snapchat.android"
+        private const val LINKEDIN_PACKAGE_NAME = "com.linkedin.android"
+        private const val X_PACKAGE_NAME = "com.twitter.android"
 
-        private val platformBlockedStates = HashMap<String, Boolean>()
-        private var isServiceStopped: Boolean = false;
-
-        // Static method to update the blocked state
-        fun updatePlatformBlockedState(platform: String, isBlocked: Boolean) {
-            platformBlockedStates[platform] = isBlocked
-        }
-        // get the platform blocked state. This method added to avoid unnecessary errors.
-        fun getPlatformBlockedState(platform: String): Boolean {
-            return platformBlockedStates[platform] ?: false // Return false by default if not found
-        }
-
-        fun updateServiceStoppedState(isStopped: Boolean){
-            isServiceStopped = isStopped;
-        }
+        // Keys written by the Flutter UI (see lib/views/pages/home_page.dart).
+        private const val KEY_YOUTUBE = "youtubeShortsBlockerNotifier"
+        private const val KEY_INSTAGRAM = "instagramReelsBlockerNotifier"
+        private const val KEY_SNAPCHAT_SPOTLIGHT = "snapchatSpotlightBlockerNotifier"
+        private const val KEY_SNAPCHAT_STORIES = "snapchatStoriesBlockerNotifier"
+        private const val KEY_TIKTOK = "tiktokVideosBlockerNotifier"
+        private const val KEY_LINKEDIN = "linkedinVideosBlockerNotifier"
+        private const val KEY_X = "xVideosBlockerNotifier"
     }
 
-    private val packages = arrayOf(
-        YOUTUBE_PACKAGE_NAME,
-        INSTAGRAM_PACKAGE_NAME,
-        TIKTOK_PACKAGE_NAME,
-        SNAPCHAT_PACKAGE_NAME,
-        LINKEDIN_PACKAGE_NAME,
-        X_PACKAGE_NAME,
-    )
+    private val youtubeShortsDetector = YouTubeShortsDetector()
+    private val instagramReelsDetector = InstagramReelsDetector()
+    private val snapchatSpotlightDetector = SnapchatSpotlightDetector()
+    private val snapchatStoriesDetector = SnapchatStoriesDetector()
+    private val tiktokVideoDetector = TiktokVideoDetector()
+    private val linkedinClipsDetector = LinkedinClipsDetector()
+    private val xVideosDetector = XVideosDetector()
 
-    private val handler = Handler(Looper.getMainLooper())
     private var lastBackPressTime: Long = 0
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        youtubeShortsDetector = YouTubeShortsDetector()
-        instagramReelsDetector = InstagramReelsDetector()
-        snapchatSpotlightDetector = SnapchatSpotlightDetector()
-        snapchatStoriesDetector = SnapchatStoriesDetector()
-        tiktokVideoDetector = TiktokVideoDetector()
-        linkedinClipsDetector = LinkedinClipsDetector()
-        xVideosDetector = XVideosDetector()
-
-        updateServiceInfo(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+        // Make sure the background service is up whenever the accessibility service is.
+        ForegroundService.start(this)
     }
 
-    private fun updateServiceInfo(eventTypes: Int) {
-        val info = AccessibilityServiceInfo().apply {
-            this.eventTypes = eventTypes
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            notificationTimeout = 100
-            packageNames = packages
-            flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-                    AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-        }
-        serviceInfo = info
-    }
-
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        if(isServiceStopped){
-            return;
-        }
-
-        val rootNode: AccessibilityNodeInfo? = rootInActiveWindow
-
-        if (rootNode == null) {
-            return
-        }
-
-        when (event?.packageName) {
-            YOUTUBE_PACKAGE_NAME -> {
-                var _youtubeShortsBlocker: String = "youtubeShortsBlockerNotifier"
-                if (getPlatformBlockedState(_youtubeShortsBlocker) && 
-                    youtubeShortsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            INSTAGRAM_PACKAGE_NAME -> {
-                var _instagramReelsBlocker: String = "instagramReelsBlockerNotifier"
-                if (getPlatformBlockedState(_instagramReelsBlocker) && 
-                    instagramReelsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            SNAPCHAT_PACKAGE_NAME -> {
-                var _snapchatSpotlightBlocker: String = "snapchatSpotlightBlockerNotifier"
-                var _snapchatStoriesBlocker: String = "snapchatStoriesBlockerNotifier"
-                if (getPlatformBlockedState(_snapchatSpotlightBlocker) &&
-                    snapchatSpotlightDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }else if(getPlatformBlockedState(_snapchatStoriesBlocker) &&
-                    snapchatStoriesDetector.isPlatformDetected(rootNode) && shouldPressBack()){
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            TIKTOK_PACKAGE_NAME -> {
-                var _tiktokVideosBlocker: String = "tiktokVideosBlockerNotifier"
-                if (getPlatformBlockedState(_tiktokVideosBlocker) &&
-                    tiktokVideoDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    // We are not performing GLOBAL_ACTION_BACK in this because if we do so the app will be closed which leads to bad user experience. We are clicking on the Friends tab rather going back.
-                    // The logic of this is implemented in the TiktokVideoDetector.kt file.
-                    // performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            LINKEDIN_PACKAGE_NAME -> {
-                var _linkedinVideosBlocker: String = "linkedinVideosBlockerNotifier"
-                if (getPlatformBlockedState(_linkedinVideosBlocker) &&
-                    linkedinClipsDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
-            X_PACKAGE_NAME -> {
-                var _xVideosBlocker: String = "xVideosBlockerNotifier"
-                if (getPlatformBlockedState(_xVideosBlocker) &&
-                    xVideosDetector.isPlatformDetected(rootNode) && shouldPressBack()) {
-                    performGlobalAction(GLOBAL_ACTION_BACK)
-                }
-            }
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // An uncaught exception here kills the whole app process (and with it the
+        // blocker), so never let one escape. Node trees from other apps are often
+        // half-built or stale while they are being laid out.
+        try {
+            handleEvent(event ?: return)
+        } catch (t: Throwable) {
+            Log.w(TAG, "Failed to handle accessibility event", t)
         }
     }
 
-    private fun shouldPressBack(): Boolean {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastBackPressTime > DEBOUNCE_DELAY) {
-            lastBackPressTime = currentTime
-            return true
+    private fun handleEvent(event: AccessibilityEvent) {
+        if (AppPrefs.isOnBreak(this)) return
+
+        val packageName = event.packageName?.toString() ?: return
+        val rootNode: AccessibilityNodeInfo = rootInActiveWindow ?: return
+
+        when (packageName) {
+            YOUTUBE_PACKAGE_NAME ->
+                if (isBlocked(KEY_YOUTUBE) && youtubeShortsDetector.isPlatformDetected(rootNode)) goBack()
+
+            INSTAGRAM_PACKAGE_NAME ->
+                if (isBlocked(KEY_INSTAGRAM) && instagramReelsDetector.isPlatformDetected(rootNode)) goBack()
+
+            SNAPCHAT_PACKAGE_NAME ->
+                if (isBlocked(KEY_SNAPCHAT_SPOTLIGHT) && snapchatSpotlightDetector.isPlatformDetected(rootNode)) {
+                    goBack()
+                } else if (isBlocked(KEY_SNAPCHAT_STORIES) && snapchatStoriesDetector.isPlatformDetected(rootNode)) {
+                    goBack()
+                }
+
+            // Pressing back would close TikTok, so the detector taps the Friends tab
+            // itself instead (see TiktokVideoDetector).
+            TIKTOK_PACKAGE_NAME ->
+                if (isBlocked(KEY_TIKTOK)) tiktokVideoDetector.isPlatformDetected(rootNode)
+
+            LINKEDIN_PACKAGE_NAME ->
+                if (isBlocked(KEY_LINKEDIN) && linkedinClipsDetector.isPlatformDetected(rootNode)) goBack()
+
+            X_PACKAGE_NAME ->
+                if (isBlocked(KEY_X) && xVideosDetector.isPlatformDetected(rootNode)) goBack()
         }
-        return false
+    }
+
+    private fun isBlocked(key: String) = AppPrefs.isPlatformBlocked(this, key)
+
+    private fun goBack() {
+        val now = System.currentTimeMillis()
+        if (now - lastBackPressTime > DEBOUNCE_DELAY) {
+            lastBackPressTime = now
+            performGlobalAction(GLOBAL_ACTION_BACK)
+        }
     }
 
     override fun onInterrupt() {
-        // Log.d("MyAccessibilityService", "Service interrupted")
-        //Handle interruption (e.g., another accessibility service is enabled)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Log.d("MyAccessibilityService", "Service destroyed")
+        // Nothing to clean up.
     }
 }

@@ -1,76 +1,72 @@
 package com.example.sankalp
 
+import android.Manifest
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import android.util.Log
+import com.example.sankalp.update.UpdateManager
+import com.example.sankalp.update.UpdateScheduler
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import android.content.Intent
-import android.provider.Settings
-import android.content.Context
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.view.accessibility.AccessibilityManager
-import android.os.Bundle
 
-class MainActivity: FlutterActivity() {
-    private val ACCESSIBILITY_CHANNEL = "com.example.sankalp/accessibility"
-    private val SHARED_PREFERENCES_CHANNEL = "com.example.sankalp/timerChannel"
-    private val TAG = "MainActivity" // TAG is a class property
-    private lateinit var channel: MethodChannel
+class MainActivity : FlutterActivity() {
+    companion object {
+        private const val TAG = "MainActivity"
+        private const val ACCESSIBILITY_CHANNEL = "com.example.sankalp/accessibility"
+        private const val UPDATE_CHANNEL = "com.example.sankalp/update"
+        private const val NOTIFICATION_PERMISSION_REQUEST = 1001
+    }
+
+    private var accessibilityChannel: MethodChannel? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ACCESSIBILITY_CHANNEL)
-        channel.setMethodCallHandler { call, result ->
-            when (call.method) {
-                "openAccessibilitySettings" -> {
-                    openAccessibilitySettings()
-                    result.success(null)
-                }
-                "isAccessibilityEnabled" -> {
-                    val isEnabled = isAccessibilityServiceEnabled()
-                    result.success(isEnabled)
-                }
-                "updateToggleState" -> {
-                    val platform = call.argument<String>("platform")
-                    val isBlocked = call.argument<Boolean>("isBlocked")
-                    if (platform != null && isBlocked != null) {
-                        MyAccessibilityService.updatePlatformBlockedState(platform, isBlocked)
-                        result.success(null)  // Acknowledge receipt
-                    } else {
-                        result.error("INVALID_ARGUMENTS", "Platform or isBlocked is null", null)
+        val messenger = flutterEngine.dartExecutor.binaryMessenger
+
+        accessibilityChannel = MethodChannel(messenger, ACCESSIBILITY_CHANNEL).apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "openAccessibilitySettings" -> {
+                        openSettings(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        result.success(null)
                     }
+                    "isAccessibilityEnabled" -> result.success(isAccessibilityServiceEnabled())
+                    else -> result.notImplemented()
                 }
-                "isServiceStopped" -> {
-                    val isStopped = call.argument<Boolean>("isStopped")
-                    if (isStopped != null) {
-                        MyAccessibilityService.updateServiceStoppedState(isStopped)
-                        result.success(null)  // Acknowledge receipt
-                    } else {
-                        result.error("INVALID_ARGUMENTS", "isStopped is null", null)
-                    }
-                }
-                else -> result.notImplemented()
             }
         }
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SHARED_PREFERENCES_CHANNEL).setMethodCallHandler { call, result ->
+        MethodChannel(messenger, UPDATE_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
-                "timerStarted" -> {
-                    val endTime = call.argument<String>("endTime")
-                    if (endTime != null) {
-                        ForegroundService.startTimer(endTime)
-                        result.success(null)
-                    } else {
-                        result.error("INVALID_ARGUMENTS", "endTime is null", null)
+                "getAppVersion" -> result.success(UpdateManager.currentVersion(this))
+                "canInstallPackages" -> result.success(UpdateManager.canInstallPackages(this))
+                "openInstallPermissionSettings" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        openSettings(
+                            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
+                        )
                     }
+                    result.success(null)
                 }
-                "endTimeUpdated" -> {
-                    val endTime = call.argument<String>("endTime")
-                    if (endTime != null) {
-                        ForegroundService.updateEndTime(endTime)
-                        result.success(null)
-                    } else {
-                        result.error("INVALID_ARGUMENTS", "endTime is null", null)
-                    }
+                "autoUpdateChanged" -> {
+                    UpdateScheduler.syncWithSetting(this)
+                    result.success(null)
+                }
+                "checkForUpdate" -> {
+                    val app = applicationContext
+                    Thread {
+                        val outcome = UpdateManager.checkAndInstall(app, userInitiated = true)
+                        mainHandler.post { result.success(outcome.toMap()) }
+                    }.start()
                 }
                 else -> result.notImplemented()
             }
@@ -79,35 +75,49 @@ class MainActivity: FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val serviceIntent = Intent(this, ForegroundService::class.java)
-        startForegroundService(serviceIntent)
+        ForegroundService.start(this)
+        UpdateScheduler.syncWithSetting(this)
+        requestNotificationPermissionIfNeeded()
     }
 
     override fun onResume() {
         super.onResume()
-        // Check accessibility status and notify Flutter
-        checkAccessibilityAndNotify()
+        // The user may have just enabled/disabled the service in Settings.
+        accessibilityChannel?.invokeMethod("onAccessibilityStatusChanged", isAccessibilityServiceEnabled())
     }
 
-    private fun checkAccessibilityAndNotify() {
-        val isEnabled = isAccessibilityServiceEnabled()
-
-        // Use 'runOnUiThread' because 'invokeMethod' needs to run on the UI thread
-        runOnUiThread {
-            channel.invokeMethod("onAccessibilityStatusChanged", isEnabled)
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST)
         }
     }
 
-    private fun openAccessibilitySettings() {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-        startActivity(intent)
+    private fun openSettings(intent: Intent) {
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not open settings screen", e)
+            try {
+                startActivity(Intent(Settings.ACTION_SETTINGS))
+            } catch (_: Exception) {
+            }
+        }
     }
 
+    /**
+     * Settings may store the service as "pkg/pkg.Class" or the short "pkg/.Class" form, so
+     * compare parsed component names rather than doing a substring match (the old check
+     * missed the short form, leaving users stuck on the "enable accessibility" screen).
+     */
     private fun isAccessibilityServiceEnabled(): Boolean {
-        val service = "${packageName}/${packageName}.MyAccessibilityService"
-        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-        val accessibilityEnabled = Settings.Secure.getInt(contentResolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0)
-
-        return accessibilityEnabled == 1 && enabledServices?.contains(service) == true
+        val expected = ComponentName(this, MyAccessibilityService::class.java)
+        val enabledServices = Settings.Secure.getString(
+            contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        return enabledServices.split(':').any { entry ->
+            ComponentName.unflattenFromString(entry.trim()) == expected
+        }
     }
 }

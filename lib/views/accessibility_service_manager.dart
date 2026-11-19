@@ -21,12 +21,12 @@ class AccessibilityServiceManager with ChangeNotifier {
   Future<void> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'onAccessibilityStatusChanged':
-        _isAccessibilityServiceEnabled = call.arguments as bool;
+        _isAccessibilityServiceEnabled = call.arguments == true;
         _isLoading = false; // Set loading to false after status update
         notifyListeners();
         break;
       default:
-        print('Unknown method call received from native side: ${call.method}');
+        debugPrint('Unknown method call from native side: ${call.method}');
     }
   }
 
@@ -35,11 +35,11 @@ class AccessibilityServiceManager with ChangeNotifier {
     notifyListeners(); //show the loading screen
     try {
       _isAccessibilityServiceEnabled =
-          await _platform.invokeMethod('isAccessibilityEnabled');
+          await _platform.invokeMethod<bool>('isAccessibilityEnabled') ?? false;
       _isLoading = false;
       notifyListeners(); // Update UI after checking
     } on PlatformException catch (e) {
-      print("Error checking accessibility status: $e");
+      debugPrint("Error checking accessibility status: $e");
       _isAccessibilityServiceEnabled = false;
       _isLoading = false;
       notifyListeners();
@@ -50,8 +50,7 @@ class AccessibilityServiceManager with ChangeNotifier {
     try {
       await _platform.invokeMethod('openAccessibilitySettings');
     } on PlatformException catch (e) {
-      print("Failed to open accessibility settings: '${e.message}'.");
-      // Consider showing a dialog or snackbar to inform the user.
+      debugPrint("Failed to open accessibility settings: '${e.message}'.");
     }
   }
 }
